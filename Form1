@@ -1,0 +1,254 @@
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Windows.Forms;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing.Drawing2D;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Billiard
+{
+    public partial class Form1 : Form
+    {
+       Ball C1 = new Ball(1240, 385, Color.White);
+       Ball C2 = new Ball(375, 200, Color.Yellow);
+       Ball R1 = new Ball(375, 385, Color.Red);
+       Ball R2 = new Ball(1005, 385, Color.Red);
+
+        Ball[] balls = new Ball[4];
+        int[] sides = { 75, 1312, 75, 690 };    //left right top bottom,..when center hits this boundary the ball bounce back
+        public int[] Sides { get => sides; }
+
+
+        int guage_move = 0;
+
+        bool turn = false; //true==white false==yellow
+        bool direction_Selected = false;
+
+        Image Table_Image = Image.FromFile(@"C:\Users\ghcho\OneDrive\문서\Visual Studio 2017\Projects\Billiard\Resources\table1.png");
+        Image Cue_Image = Image.FromFile(@"C:\Users\ghcho\Desktop\C#\cue_image.png");
+
+
+        sbyte score;
+
+        
+
+        public Form1()
+        {
+            InitializeComponent();
+            Load += Form1_Load;
+            Paint += Form1_Paint;
+            Click += Form1_Click;
+            MouseUp += Form1_MouseUp;
+            MouseDown += Form1_MouseDown;
+            MouseMove += Form1_MouseMove;
+            MouseEnter += Form1_MouseEnter;
+            balls = new Ball[] { C1, C2, R1, R2 };
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            Width = 1920;
+            Height = 1080;
+            Location = new Point(0, 0);
+        }
+
+        private void Form1_Click(object sender, EventArgs e)
+        {
+            C2.Velocity.X = (C2.GetCenter.X - MousePosition.X) / 5;
+            C2.Velocity.Y = (C2.GetCenter.Y - MousePosition.Y) / 5;
+        }
+
+        private void Form1_MouseDown(object sender, MouseEventArgs e)
+        {
+
+        }
+
+        private void Form1_MouseMove(object sender, MouseEventArgs e)
+        {
+
+        }
+
+        private void Form1_MouseUp(object sender, MouseEventArgs e)
+        {
+
+        }
+
+        private void Form1_MouseEnter(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Form1_Paint(object sender, PaintEventArgs e)
+        {
+            e.Graphics.DrawImage(Table_Image, 0, 0, 1400, 775);
+            DoubleBuffered = true;
+            DrawBall(e);
+            DrawDirLine(e, ballsStopped());
+            DrawCue(e);
+
+        }
+
+        void DrawBall(PaintEventArgs e)
+        {
+            foreach (Ball b in balls)
+            {
+               e.Graphics.FillEllipse(new SolidBrush(b.Color), new Rectangle((int)b.GetCenter.X - b.Diameter / 2, (int)b.GetCenter.Y - b.Diameter / 2, b.Diameter, b.Diameter));
+            }
+        }
+
+        void DrawCue(PaintEventArgs e)
+        {
+            SolidBrush sb_guage = new SolidBrush(Color.DarkRed);
+            Rectangle rect_guage = new Rectangle(1415, 250, 87, 390);
+            e.Graphics.FillRectangle(sb_guage, rect_guage);
+            e.Graphics.DrawRectangle(new Pen(Color.Black, 4), rect_guage);
+            e.Graphics.DrawLine(new Pen(Color.LightYellow, 3), 1415, 515, 1500, 515);   //limit line
+            e.Graphics.DrawImage(Cue_Image, 1450, 315);
+
+        }
+
+        void DrawDirLine(PaintEventArgs e, bool ballstop)
+        {
+            Pen pen_gray = new Pen(Color.Gray, 4);
+            Pen pen_grayDot = new Pen(Color.Gray, 2);
+            pen_grayDot.DashStyle = DashStyle.Dot;
+            Vector mouseVector = new Vector(MousePosition.X, MousePosition.Y);
+            int dirLine_Length = 400;
+            double MC_Length_W = (mouseVector - C1.GetCenter).Length();
+            double MC_Length_Y = (mouseVector - C2.GetCenter).Length();
+            Vector point_W = (dirLine_Length / MC_Length_Y) * (C1.GetCenter - mouseVector) + C1.GetCenter;
+            Vector point_Y = (dirLine_Length / MC_Length_Y) * (C2.GetCenter - mouseVector) + C2.GetCenter;
+
+            if (ballsStopped())
+            {
+            e.Graphics.DrawLine(pen_gray, (float)C2.GetCenter.X, (float)C2.GetCenter.Y, MousePosition.X, MousePosition.Y);
+            e.Graphics.DrawLine(pen_grayDot, (float)C2.GetCenter.X, (float)C2.GetCenter.Y, (float)point_Y.X, (float)point_Y.Y);
+
+            }
+
+        }
+
+        private void test_Click(object sender, EventArgs e)
+        {
+            C2.Velocity.X = (C2.GetCenter.X - MousePosition.X) / 15;
+            C2.Velocity.Y = (C2.GetCenter.Y - MousePosition.Y) / 15 ;
+        }
+
+        private bool DetectCollision(Vector ballOneCentre, Vector ballTwoCentre, int diameterOne, int diameterTwo)
+        //Detects if there is a collison between two balls
+        {
+            Vector distanceBallOneBallTwo = ballTwoCentre - ballOneCentre; //Temp vector between two balls
+            float distance = (float)distanceBallOneBallTwo.Length(); //The length of this vector
+                                                                     //float collisionDistance = 2*(float)radius.Length();  //If the length of the vector is less than this collsion then the balls are colliding
+            if (distance < (diameterOne/2) + (diameterTwo/2) + 2) //To stop the balls from intersecting
+                return true; //true if there is a collision
+            else
+                return false;
+        }
+
+        private void CheckCollisions()
+        //Check if there has been any collision
+        {
+            Vector tempVelocity = new Vector();
+            bool Col_C1C2 = DetectCollision(C1.GetCenter, C2.GetCenter,C1.Diameter,C2.Diameter);
+            bool Col_C1R1 = DetectCollision(C1.GetCenter, R1.GetCenter,C1.Diameter,R1.Diameter);
+            bool Col_C1R2 = DetectCollision(C1.GetCenter, R2.GetCenter,C1.Diameter,R2.Diameter);
+            bool Col_C2R1 = DetectCollision(C2.GetCenter, R1.GetCenter,C2.Diameter,R1.Diameter);
+            bool Col_C2R2 = DetectCollision(C2.GetCenter, R2.GetCenter,C2.Diameter,R2.Diameter);
+            bool Col_R1R2 = DetectCollision(R1.GetCenter, R2.GetCenter,R1.Diameter,R2.Diameter);
+
+            {
+
+                if (Col_C1C2)
+                {
+                    ChangeVelocities2(C1, C2);
+
+                }
+
+                if (Col_C1R1)
+                {
+                    ChangeVelocities2(C1, R1);
+                }
+
+                if (Col_C1R2)
+                {
+                    ChangeVelocities2(C1, R2);
+
+                }
+
+                if (Col_C2R1)
+                {
+                    ChangeVelocities2(C2, R1);
+                }
+
+                if (Col_C2R2)
+                {
+                    ChangeVelocities2(C2, R2);
+
+                }
+
+                if (Col_R1R2)
+                {
+                    ChangeVelocities2(R1, R2);
+
+                }
+            }
+        }
+
+        private void ChangeVelocities2(Ball ball1,Ball ball2)
+        {
+            Vector tempVelocity = ChangeVelocities(ball1.Velocity, ball1.GetCenter, ball2.Velocity, ball2.GetCenter);
+            ball2.Velocity = ChangeVelocities(ball2.Velocity, ball2.GetCenter, ball1.Velocity, ball1.GetCenter);
+            ball1.Velocity = tempVelocity;
+        }
+
+        private Vector ChangeVelocities(Vector velocityOne, Vector ballCentreOne, Vector velocityTwo, Vector ballCentreTwo)
+        //Returns the updated velocity of the first arguement 
+        {
+            Vector centresVector = ballCentreTwo - ballCentreOne;
+            Vector ballOnePerpendicular = centresVector.PerpendicularComponent(velocityOne);
+            Vector ballTwoPerpendicular = centresVector.PerpendicularComponent(velocityTwo);
+            Vector ballTwoPara = centresVector.ParallelComponent(velocityTwo);
+            Vector ballOneNewVelocity = ballTwoPara + ballOnePerpendicular; //http://sinepost.wordpress.com/category/mathematics/geometry/trigonometry/
+
+            return ballOneNewVelocity; //returns the new velocity of the first ball passed to it
+        }
+
+        void GameManager()
+        {
+            
+        }
+
+        bool ballsStopped()
+        {
+            double result = 0;
+            foreach (Ball b in balls)
+            {
+                result += b.Velocity.Length();
+            }
+
+            return result == 0 ? true : false;
+        }
+
+        /// <summary>
+        /// updates world setting at each interval
+        /// </summary>
+
+        internal void Update()
+        {
+            foreach (Ball b in balls)
+            {
+              b.moveball();
+            }
+            CheckCollisions();
+            ballsStopped();
+            textBox1.Text = C2.Velocity.ToString();
+            textBox2.Text = ballsStopped().ToString();
+        }
+    }
+}
