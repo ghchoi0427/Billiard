@@ -1,0 +1,79 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace Billiard
+{
+    class Ball:Form
+    {
+        private Vector CenterPoint = new Vector();
+        private Vector velocity = new Vector(0,0);
+        float Speed;
+        int diameter = 37;
+        Color color;
+       
+        public Ball()
+        {
+            GetCenter.X = 0;
+            GetCenter.Y = 0;
+        }
+
+        public Ball(int x, int y)
+        {
+            GetCenter.X = x;
+            GetCenter.Y = y;
+        }
+
+        public Ball(int x, int y, Color c)
+        {
+            GetCenter.X = x;
+            GetCenter.Y = y;
+            color = c;
+        }
+
+        public Vector GetCenter { get => CenterPoint; }
+        public Vector Velocity { get => velocity; set => velocity = value; }
+        public float GetSpeed { get => Speed; set => Speed = value; }
+        public int Diameter { get => diameter; set => diameter = value; }
+        public Color Color { get => color; }
+
+        
+        int[] sides = { 75, 1312, 75, 690 };
+        //             left right top bottom
+
+        public void moveball()
+        {
+            if (CenterPoint.X < sides[0] || CenterPoint.X > sides[1])
+            {
+                velocity.X *= -1;
+            }
+
+            if (CenterPoint.Y < sides[2] || CenterPoint.Y > sides[3])
+            {
+                velocity.Y *= -1;
+            }
+
+            //CenterPoint.X += velocity.X * Speed;
+            //CenterPoint.Y += velocity.Y * Speed;
+
+            CenterPoint.X += velocity.X;
+            CenterPoint.Y += velocity.Y;
+
+            velocity *= 0.972;
+
+            if (Math.Abs(velocity.Length()) < 0.03)
+            {
+                velocity.X = 0;
+                velocity.Y = 0;
+            }
+        }
+
+    }
+
+}
