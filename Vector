@@ -1,0 +1,145 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Billiard
+{
+    class Vector
+    {
+        private double x;
+        private double y;
+        
+        public double X { get => x; set => x = value; }
+        public double Y { get => y; set => y = value; }
+
+        public Vector()
+        {
+            x = 0.0;
+            y = 0.0;
+        }
+
+        public Vector(Vector v)
+        {
+            x = v.y;
+            y = v.y;
+        }
+
+        public Vector(double x1, double y1)
+        {
+            x = x1;
+            y = y1;
+        }
+
+        public override string ToString()
+        {
+            return "(" + x.ToString("g3") + "," + y.ToString("g3") + ")";
+        }
+
+        public double Length()
+        {
+            return Math.Sqrt(x * x + y * y);
+        }
+
+        public bool Equal(Vector v2)
+        {
+            if (x == v2.X && y == v2.Y)
+                return true;
+            else
+                return false;
+        }
+        /// <summary>
+        /// 벡터의 외적, 스칼라 곱
+        /// </summary>
+        /// <param name="v2"></param>
+        /// <returns></returns>
+        public double DotProduct(Vector v2)     //벡터의 내적 (스칼라 곱)
+        {
+            return (x * v2.X + y * v2.Y);
+        }
+        /// <summary>
+        /// 파라미터로 받은 벡터와 이루는 각을 double형으로 반환
+        /// </summary>
+        /// <param name="v2"></param>
+        /// <returns></returns>
+        public double AngleBetween(Vector v2)
+        {
+            double answer = 0;
+            double top = DotProduct(v2);
+            double under = Length() * v2.Length();
+            double angle;
+            //never divide by zero
+            if (under != 0)
+                answer = top / under;
+            else
+                return 0;
+            //consine inverse can't do number bigger than 1
+            if (answer > 1) answer = 1;
+            if (answer < -1) answer = -1;
+            angle = Math.Acos(answer);
+            return (angle * 180 / Math.PI);
+        }
+        /// <summary>
+        /// 수평
+        /// </summary>
+        /// <param name="v2"></param>
+        /// <returns></returns>
+        public Vector ParallelComponent(Vector v2)      
+        {
+            double lengthSquared, dotProduct, scale;
+            lengthSquared = Length() * Length();
+            dotProduct = DotProduct(v2);
+            if (lengthSquared != 0)
+                scale = dotProduct / lengthSquared;
+            else
+                return new Vector();
+            return new Vector(Scale(scale));
+        }
+
+        public Vector Unit()   //단위벡터
+        {
+            double length = Math.Sqrt(x * x + y * y);
+            return new Vector(x / length, y / length);
+        }
+
+        /// <summary>
+        /// 수직
+        /// </summary>
+        /// <param name="v2"></param>
+        /// <returns></returns>
+        public Vector PerpendicularComponent(Vector v2)
+        {
+            //subtract the parallel component from the orginal vecot
+            //to get the orthogonal bit
+
+            return new Vector(v2 - ParallelComponent(v2)); // perpendicular component = vectorAnswer - parallel component
+        }
+
+        public Vector Scale(double scale)
+        {
+            return new Vector(scale * x, scale * y); //Multiplys by scalar
+        }
+
+        public static Vector operator *(double k, Vector v1)
+        {
+            return new Vector(k * v1.x, k * v1.y);
+        }
+
+        public static Vector operator *(Vector v1, double k)
+        {
+            return new Vector(k * v1.x, k * v1.y);
+        }
+
+        public static Vector operator +(Vector v1, Vector v2)
+        {
+            return new Vector(v1.X + v2.X, v1.Y + v2.Y); //adds
+        }
+
+        public static Vector operator -(Vector v1, Vector v2)
+        {
+            return new Vector(v1.X - v2.X, v1.Y - v2.Y); //subtracts
+        }
+       
+    }
+}
